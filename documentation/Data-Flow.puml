@@ -1,0 +1,133 @@
+@startuml Hybrid Knowledge Mesh - Data Flow
+
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam handwritten false
+skinparam defaultFontName "Segoe UI"
+skinparam shadowing false
+
+title Data Flow & API Interactions
+version "Analysis as of 2025-12-12"
+
+'--- USER INPUT FLOW ---
+actor User
+participant "App.tsx" as App
+participant "geminiService.ts" as Service
+database "Google AI API" as API
+database "LocalStorage" as Storage
+
+== Initial Setup ==
+User -> App: Load Application
+App -> Storage: Retrieve Templates
+App -> Storage: Retrieve Last Settings
+Storage --> App: Return Data
+
+== API Key Check ==
+App -> Service: Check API Key
+Service -> API: Verify Key Status
+API --> Service: Return Status
+Service --> App: API Key Valid?
+
+== Main Generation Flow ==
+
+group Generate Content
+    User -> App: Enter Topic + Settings
+    App -> App: Validate Input
+
+    alt API Key Missing
+        App -> User: Show API Key Modal
+        User -> App: Select API Key
+        App -> Service: Update API Key
+    end
+
+    App -> Service: researchTopicForPrompt()
+
+    group Research Phase
+        Service -> API: Generate Content (TEXT_MODEL)
+        note right of API: Uses Google Search\nfor fact checking
+
+        API --> Service: Research Result
+        Service -> Service: Parse Facts
+        Service -> Service: Parse Visual Prompt
+        Service -> Service: Extract Search Results
+    end
+
+    Service --> App: Return Research Result
+    App -> App: Update Loading State
+
+    group Media Generation
+        alt Image Format
+            App -> Service: generateInfographicImage()
+            Service -> API: Generate Image (IMAGE_MODEL)
+            API --> Service: Base64 Image
+            Service --> App: Return Image Data
+        else Video Format
+            App -> Service: generateExplainerVideo()
+            Service -> API: Generate Video (VIDEO_MODEL)
+            note right of API: Asynchronous operation\nPolls for completion
+
+            API --> Service: Video Download Link
+            Service -> Service: Fetch Video
+            Service --> App: Return Video Blob URL
+        end
+    end
+
+    App -> App: Update Content History
+    App -> User: Display Generated Content
+end
+
+== Edit Flow ==
+
+group Edit Content
+    User -> App: Request Edit (Images Only)
+    App -> Service: editInfographicImage()
+    Service -> API: Edit Image (EDIT_MODEL)
+    API --> Service: Edited Base64 Image
+    Service --> App: Return Edited Image
+    App -> App: Add to Content History
+    App -> User: Display Edited Content
+end
+
+== Template Management ==
+
+group Save Template
+    User -> App: Save Current Configuration
+    App -> App: Create Template Object
+    App -> Storage: Persist Template
+    App -> User: Update UI
+end
+
+group Load Template
+    User -> App: Select Template
+    App -> Storage: Retrieve Template
+    Storage --> App: Return Template Data
+    App -> App: Apply Settings
+    App -> User: Update UI
+end
+
+== File Upload Flow ==
+
+group Upload File
+    User -> App: Select File
+    App -> App: Validate File (<20MB)
+    App -> App: Convert to Base64
+    App -> Service: Include in Research Request
+    note right of Service: File takes priority\nover search results
+end
+
+== Error Handling ==
+
+group API Errors
+    Service -> API: Request
+    API --> Service: Error Response
+
+    alt 403/404 Error
+        Service --> App: Billing Required Error
+        App -> User: Show API Key Modal
+    else Other Errors
+        Service --> App: Error Message
+        App -> User: Display Error
+    end
+end
+
+@enduml

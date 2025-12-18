@@ -1,0 +1,112 @@
+# Data Flow & API Interactions
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant App as App.tsx
+    participant Service as geminiService.ts
+    participant API as Google AI API
+    participant Storage as LocalStorage
+
+    %% Initial Setup
+    Note over User,Storage: Application Initialization
+    User->>+App: Load Application
+    App->>+Storage: Retrieve Templates
+    Storage-->>-App: Return Data
+    App->>+Storage: Retrieve Last Settings
+    Storage-->>-App: Return Data
+
+    %% API Key Check
+    Note over User,API: API Key Verification
+    App->>+Service: Check API Key
+    Service->>+API: Verify Key Status
+    API-->>-Service: Return Status
+    Service-->>-App: API Key Valid?
+
+    alt No API Key
+        App->>+User: Show API Key Modal
+        User->>App: Select API Key
+        App->>+Service: Update API Key
+        Service-->>-App: Key Updated
+    end
+
+    %% Main Generation Flow
+    Note over User,Storage: Content Generation
+    User->>+App: Enter Topic + Settings
+    App->>App: Validate Input
+
+    App->>+Service: researchTopicForPrompt(topic, level, style, language, format, file)
+
+    Note over Service,API: Research Phase
+    Service->>+API: Generate Content (TEXT_MODEL)
+    note right of API: Uses Google Search<br/>for fact checking
+    API-->>-Service: Research Result
+    Service->>Service: Parse Facts
+    Service->>Service: Parse Visual Prompt
+    Service->>Service: Extract Search Results
+    Service-->>-App: Research Result
+
+    App->>App: Update Loading State
+
+    alt Image Format
+        App->>+Service: generateInfographicImage(prompt)
+        Service->>+API: Generate Image (IMAGE_MODEL)
+        API-->>-Service: Base64 Image
+        Service-->>-App: Image Data
+    else Video Format
+        App->>+Service: generateExplainerVideo(prompt)
+        Service->>+API: Generate Video (VIDEO_MODEL)
+        note right of API: Asynchronous operation<br/>Polls for completion
+        API-->>-Service: Video Download Link
+        Service->>Service: Fetch Video
+        Service-->>-App: Video Blob URL
+    end
+
+    App->>App: Update Content History
+    App-->>-User: Display Generated Content
+
+    %% Edit Flow
+    Note over User,Storage: Content Editing (Images Only)
+    User->>+App: Request Edit
+    App->>+Service: editInfographicImage(image, editPrompt)
+    Service->>+API: Edit Image (EDIT_MODEL)
+    API-->>-Service: Edited Base64 Image
+    Service-->>-App: Edited Image
+    App->>App: Add to Content History
+    App-->>-User: Display Edited Content
+
+    %% Template Management
+    Note over User,Storage: Template Operations
+    User->>+App: Save Current Configuration
+    App->>App: Create Template Object
+    App->>+Storage: Persist Template
+    Storage-->>-App: Success
+    App-->>-User: Update UI
+
+    User->>+App: Select Template
+    App->>+Storage: Retrieve Template
+    Storage-->>-App: Template Data
+    App->>App: Apply Settings
+    App-->>-User: Update UI
+
+    %% File Upload Flow
+    Note over User,Storage: File Upload
+    User->>+App: Select File
+    App->>App: Validate File (<20MB)
+    App->>App: Convert to Base64
+    App->>Service: Include in Research
+    note right of Service: File takes priority<br/>over search results
+
+    %% Error Handling
+    Note over User,Storage: Error Scenarios
+    Service->>+API: Request
+    API-->>-Service: Error Response
+
+    alt 403/404 Error
+        Service-->>App: Billing Required Error
+        App->>+User: Show API Key Modal
+    else Other Errors
+        Service-->>App: Error Message
+        App-->>-User: Display Error
+    end
+```

@@ -1,0 +1,153 @@
+@startuml Hybrid Knowledge Mesh - AST Overview
+
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam handwritten false
+skinparam defaultFontName "Segoe UI"
+skinparam shadowing false
+
+title Hybrid Knowledge Mesh (HKM) - Abstract Syntax Tree
+version "Analysis as of 2025-12-12"
+
+'--- PACKAGE STRUCTURE ---
+package "Root" {
+    package "src" {
+        package "components" {
+            class Infographic
+            class IntroScreen
+            class Loading
+            class SearchResults
+        }
+        package "services" {
+            class geminiService
+        }
+        class App
+        class types
+        class index
+    }
+    package "config" {
+        class vite.config
+        class tsconfig
+        class package.json
+    }
+}
+
+'--- TYPES MODULE ---
+class types <<Module>> {
+    + AspectRatio: enum
+    + ComplexityLevel: enum
+    + VisualStyle: enum
+    + Language: enum
+    + MediaType: enum
+    + GeneratedContent: interface
+    + SearchResultItem: interface
+    + ResearchResult: interface
+    + UploadedFile: interface
+    + SettingsTemplate: interface
+    + AIStudio: interface
+}
+
+'--- MAIN APP COMPONENT ---
+class App <<React.FC>> {
+    - showIntro: boolean
+    - topic: string
+    - complexityLevel: ComplexityLevel
+    - visualStyle: VisualStyle
+    - language: Language
+    - outputFormat: MediaType
+    - attachedFile: UploadedFile | null
+    - isLoading: boolean
+    - error: string | null
+    - contentHistory: GeneratedContent[]
+    - currentSearchResults: SearchResultItem[]
+    - isDarkMode: boolean
+    - templates: SettingsTemplate[]
+    - hasApiKey: boolean
+
+    + handleGenerate(): Promise<void>
+    + handleEdit(): Promise<void>
+    + handleFileSelect(): void
+    + saveTemplate(): void
+    + loadTemplate(): void
+    + deleteTemplate(): void
+    + restoreContent(): void
+    + MeshLogo(): JSX.Element
+    + KeySelectionModal(): JSX.Element
+}
+
+'--- GEMINI SERVICE ---
+class geminiService <<Service>> {
+    + getAi(): GoogleGenAI
+    + getLevelInstruction(): string
+    + getStyleInstruction(): string
+    + researchTopicForPrompt(): Promise<ResearchResult>
+    + generateInfographicImage(): Promise<string>
+    + generateExplainerVideo(): Promise<string>
+    + editInfographicImage(): Promise<string>
+
+    - TEXT_MODEL: string
+    - IMAGE_MODEL: string
+    - VIDEO_MODEL: string
+    - EDIT_MODEL: string
+}
+
+'--- COMPONENTS ---
+class Infographic <<React.FC>> {
+    - editPrompt: string
+    - isFullscreen: boolean
+    - zoomLevel: number
+
+    + handleSubmit(): void
+    + handleZoomIn(): void
+    + handleZoomOut(): void
+    + handleResetZoom(): void
+    + handleCloseFullscreen(): void
+}
+
+class IntroScreen <<React.FC>> {
+    - phase: number
+    - particles: Array<{x, y, z}>
+
+    + handleEnter(): void
+}
+
+class Loading <<React.FC>> {
+    + LoadingDisplay: JSX.Element
+    + FactDisplay: JSX.Element
+}
+
+class SearchResults <<React.FC>> {
+    + ResultList: JSX.Element
+}
+
+'--- RELATIONSHIPS ---
+App --> types : depends on
+App --> Infographic : renders
+App --> IntroScreen : renders
+App --> Loading : renders
+App --> SearchResults : renders
+App --> geminiService : calls
+
+Infographic --> types : depends on
+IntroScreen --> types : depends on
+Loading --> types : depends on
+SearchResults --> types : depends on
+
+geminiService --> types : depends on
+
+'--- DATA FLOWS ---
+App .> geminiService : API calls
+geminiService .> App : returns data
+
+'--- EXTERNAL DEPENDENCIES ---
+package "External" {
+    class "@google/genai" <<External>>
+    class "React" <<External>>
+    class "lucide-react" <<External>>
+}
+
+App --> React
+App --> "@google/genai"
+App --> "lucide-react"
+
+@enduml

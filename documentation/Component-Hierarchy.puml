@@ -1,0 +1,157 @@
+@startuml Hybrid Knowledge Mesh - Component Hierarchy
+
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam handwritten false
+skinparam defaultFontName "Segoe UI"
+skinparam shadowing false
+
+title Component Hierarchy & State Flow
+version "Analysis as of 2025-12-12"
+
+'--- TOP LEVEL ---
+component "index.tsx" as Entry
+
+'--- MAIN APP ---
+component "App.tsx" as MainApp {
+    rectangle "State Management" as State {
+        [showIntro: boolean]
+        [topic: string]
+        [complexityLevel: ComplexityLevel]
+        [visualStyle: VisualStyle]
+        [language: Language]
+        [outputFormat: MediaType]
+        [attachedFile: UploadedFile]
+        [isLoading: boolean]
+        [error: string | null]
+        [contentHistory: GeneratedContent[]]
+        [templates: SettingsTemplate[]]
+        [hasApiKey: boolean]
+        [isDarkMode: boolean]
+    }
+
+    rectangle "Core Handlers" as Handlers {
+        [handleGenerate()]
+        [handleEdit()]
+        [handleFileSelect()]
+        [saveTemplate()]
+        [loadTemplate()]
+        [deleteTemplate()]
+        [restoreContent()]
+    }
+
+    rectangle "UI Components" as UI {
+        <&search> SearchForm
+        <&settings> ConfigurationBar
+        <&history> ContentHistory
+        <&key> APIKeyModal
+    }
+}
+
+'--- CHILD COMPONENTS ---
+component "components/" as Components {
+    component "IntroScreen.tsx" as Intro {
+        [Phase-based Animation]
+        [HKM Logo Animation]
+        [Enter Button]
+    }
+
+    component "Loading.tsx" as Loading {
+        [Loading Animation]
+        [Progress Steps]
+        [Fun Facts Display]
+    }
+
+    component "Infographic.tsx" as Infographic {
+        [Media Display]
+        [Fullscreen Mode]
+        [Zoom Controls]
+        [Edit Interface]
+        [Download Options]
+    }
+
+    component "SearchResults.tsx" as Results {
+        [Result List]
+        [Source Links]
+    }
+}
+
+'--- SERVICE LAYER ---
+component "services/" as Services {
+    component "geminiService.ts" as Gemini {
+        [researchTopicForPrompt()]
+        [generateInfographicImage()]
+        [generateExplainerVideo()]
+        [editInfographicImage()]
+
+        rectangle "Model Constants" as Models {
+            [TEXT_MODEL]
+            [IMAGE_MODEL]
+            [VIDEO_MODEL]
+            [EDIT_MODEL]
+        }
+
+        rectangle "Helper Functions" as Helpers {
+            [getLevelInstruction()]
+            [getStyleInstruction()]
+        }
+    }
+}
+
+'--- TYPE DEFINITIONS ---
+component "types.ts" as Types {
+    [Type Aliases]
+    [Interfaces]
+    [Global Declarations]
+}
+
+'--- CONFIGURATION ---
+component "config/" as Config {
+    [vite.config.ts]
+    [tsconfig.json]
+    [package.json]
+}
+
+'--- RENDER FLOW ---
+Entry --> MainApp : mounts
+
+MainApp --> Intro : conditionally renders
+MainApp --> Loading : conditionally renders
+MainApp --> Infographic : conditionally renders
+MainApp --> Results : conditionally renders
+
+'--- DATA FLOW ---
+MainApp --> Gemini : API calls
+Gemini --> MainApp : returns data
+
+MainApp --> Types : type definitions
+Infographic --> Types : type definitions
+Loading --> Types : type definitions
+Results --> Types : type definitions
+Intro --> Types : type definitions
+Gemini --> Types : type definitions
+
+'--- STATE MANAGEMENT ---
+State --> Handlers : provides data
+Handlers --> State : updates values
+State --> UI : reflects changes
+
+'--- EXTERNAL INTERFACES ---
+database "LocalStorage" as Storage {
+    [hkm_templates]
+    [hkm_last_settings]
+}
+
+MainApp --> Storage : persists settings
+MainApp --> Storage : persists templates
+
+cloud "Google AI API" as GoogleAPI
+Gemini --> GoogleAPI : makes requests
+GoogleAPI --> Gemini : returns responses
+
+'--- USER INTERACTIONS ---
+user "User" as User
+User --> MainApp : interacts
+MainApp --> User : displays content
+
+@enduml

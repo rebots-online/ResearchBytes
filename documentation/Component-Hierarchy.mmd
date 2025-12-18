@@ -1,0 +1,129 @@
+# Component Hierarchy & State Flow
+
+```mermaid
+graph TD
+    %% Entry Point
+    E[index.tsx] --> APP[App.tsx]
+
+    %% App Component Structure
+    subgraph "App.tsx"
+        direction TB
+
+        subgraph "State Management"
+            ST[showIntro]
+            TP[topic]
+            CL[complexityLevel]
+            VS[visualStyle]
+            LG[language]
+            OF[outputFormat]
+            AF[attachedFile]
+            IL[isLoading]
+            ER[error]
+            CH[contentHistory]
+            TM[templates]
+            AK[hasApiKey]
+            DM[isDarkMode]
+        end
+
+        subgraph "Core Handlers"
+            HG[handleGenerate]
+            HE[handleEdit]
+            HF[handleFileSelect]
+            STT[saveTemplate]
+            LT[loadTemplate]
+            DT[deleteTemplate]
+            RC[restoreContent]
+        end
+
+        subgraph "UI Components"
+            SF[SearchForm]
+            CB[ConfigurationBar]
+            CHH[ContentHistory]
+            AKM[APIKeyModal]
+        end
+    end
+
+    %% Child Components
+    subgraph "Child Components"
+        IS[IntroScreen.tsx]
+        LD[Loading.tsx]
+        IG[Infographic.tsx]
+        SR[SearchResults.tsx]
+    end
+
+    %% Service Layer
+    subgraph "Services"
+        GS[geminiService.ts]
+
+        subgraph "Service Methods"
+            RT[researchTopicForPrompt]
+            GI[generateInfographicImage]
+            GV[generateExplainerVideo]
+            EI[editInfographicImage]
+        end
+
+        subgraph "Constants"
+            TM[TEXT_MODEL]
+            IM[IMAGE_MODEL]
+            VM[VIDEO_MODEL]
+            EM[EDIT_MODEL]
+        end
+    end
+
+    %% Types Module
+    subgraph "types.ts"
+        TA[Type Aliases]
+        IN[Interfaces]
+        GD[Global Declarations]
+    end
+
+    %% Configuration
+    subgraph "Config Files"
+        VC[vite.config.ts]
+        TS[tsconfig.json]
+        PK[package.json]
+    end
+
+    %% Render Flow
+    APP --> IS : conditionally renders
+    APP --> LD : conditionally renders
+    APP --> IG : conditionally renders
+    APP --> SR : conditionally renders
+
+    %% Data Flow
+    APP --> GS : API calls
+    GS --> APP : returns data
+
+    %% Type Dependencies
+    APP --> TA : uses
+    IG --> TA : uses
+    LD --> TA : uses
+    SR --> TA : uses
+    IS --> TA : uses
+    GS --> TA : uses
+
+    %% State Flow
+    ST --> HG : provides data
+    HG --> ST : updates
+    ST --> SF : reflects changes
+
+    %% External Storage
+    subgraph "LocalStorage"
+        LS1[hkm_templates]
+        LS2[hkm_last_settings]
+    end
+
+    APP --> LS1 : persists
+    APP --> LS2 : persists
+
+    %% External API
+    subgraph "Google AI API"
+        GA[Vertex AI]
+        SA[Search API]
+    end
+
+    GS --> GA : requests
+    GS --> SA : search
+    GA --> GS : responses
+    SA --> GS : results
+```
